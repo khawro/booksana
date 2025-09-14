@@ -7,6 +7,8 @@ struct booksanaApp: App {
       RootTabView()
         .preferredColorScheme(.dark)
         .tint(.white)
+        // .tint(Color(hex: "#7CCFB4"))
+        
     }
   }
 }
