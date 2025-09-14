@@ -52,6 +52,7 @@ struct FeaturedHeroView: View {
         }
 
         Button {
+          Haptics.tap(.soft)
           showTitlePage = true
         } label: {
           HStack(spacing: 8) {

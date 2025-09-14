@@ -40,6 +40,7 @@ struct SearchView: View {
             HStack(alignment: .top, spacing: 16) {
               ForEach(latestVM.books, id: \.id) { book in
                 Button {
+                  Haptics.tap(.soft)
                   selectedBook = book
                 } label: {
                   BookThumbnailView(book: book)

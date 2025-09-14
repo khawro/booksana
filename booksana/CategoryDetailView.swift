@@ -65,6 +65,7 @@ struct CategoryDetailView: View {
             HStack(alignment: .top, spacing: 16) {
               ForEach(vm.books, id: \.id) { book in
                 Button {
+                  Haptics.tap(.soft)
                   selectedBook = book
                 } label: {
                   BookThumbnailView(book: book)

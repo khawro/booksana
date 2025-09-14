@@ -50,6 +50,7 @@ struct ForYouView: View {
                 HStack(alignment: .top, spacing: 16) {
                   ForEach(selectedVM.books, id: \.id) { book in
                     Button {
+                      Haptics.tap(.soft)
                       selectedBook = book
                     } label: {
                       BookThumbnailView(book: book)
@@ -76,6 +77,7 @@ struct ForYouView: View {
             HStack(alignment: .top, spacing: 16) {
               ForEach(books, id: \.id) { book in
                 Button {
+                  Haptics.tap(.soft)
                   selectedBook = book
                 } label: {
                   BookThumbnailView(book: book)

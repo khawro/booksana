@@ -16,9 +16,6 @@ final class SelectedBooksViewModel: ObservableObject {
           .execute()
           .value
         
-        
-        
-
       self.books = res
       self.errorText = nil
     } catch {
