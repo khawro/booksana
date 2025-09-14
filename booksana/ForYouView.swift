@@ -16,6 +16,7 @@ struct ForYouView: View {
             .font(.custom("PPEditorialNew-Regular", size: 40))
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
+            .padding(.top, 16)
 
           Group {
             if let book = featuredVM.book {

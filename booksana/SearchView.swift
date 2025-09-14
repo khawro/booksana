@@ -15,7 +15,7 @@ struct SearchView: View {
               .font(.custom("PPEditorialNew-Regular", size: 40))
               .frame(maxWidth: .infinity, alignment: .leading)
               .padding(.horizontal, 16)
-              .padding(.top, 8)
+              .padding(.top, 24)
 
             ScrollView(.horizontal, showsIndicators: false) {
               HStack(alignment: .top, spacing: 16) {
