@@ -2,81 +2,88 @@ import SwiftUI
 
 struct FeaturedHeroView: View {
   let book: Book
-  @State private var showTitlePage = false
+    let screenWidth = UIScreen.main.bounds.width
+
+  @State private var selectedBook: Book?
 
   var body: some View {
-      ZStack {
-        RoundedRectangle(cornerRadius: 32)
-          .fill(Color(hex: book.color_hex ?? "#272727"))
-
-      VStack(alignment: .center, spacing: 8) {
+    ZStack(alignment: .top) {
+        
+     // OKŁADKA
         AsyncImage(url: URL(string: book.cover ?? "")) { phase in
           switch phase {
           case .success(let image):
             image
-              .resizable()
-              .scaledToFill()
+                  .resizable()
+                     .scaledToFill()
+                     .clipped()
+                     .frame(maxWidth: screenWidth, maxHeight: screenWidth, alignment: .top)
+                     
           default:
-            Image(systemName: "book.closed")
-              .font(.system(size: 40))
-              .frame(width: 220, height: 220)
-              .foregroundStyle(.white.opacity(0.7))
+            Color.gray.opacity(0.3)
+              .frame(maxWidth: .infinity, maxHeight: screenWidth)
           }
         }
-        .frame(width: 220, height: 220)
-        .clipped()
-        .background(.white.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 6)
-        .padding(.bottom, 16)
-          
-        Text("POLECANA")
-            .font(.footnote.weight(.bold))
-            .kerning(0.4)
-            .multilineTextAlignment(.center)
-            .foregroundColor(.white.opacity(0.6))
+        
+        
+        // GRADIENT NA DOLE
+        LinearGradient(
+          gradient: Gradient(colors: [.clear, .black]),
+          startPoint: .top,
+          endPoint: .bottom
+        )
+        .frame(height: 200) // wysokość „nakładki” gradientu
+        .frame(width: screenWidth, height: screenWidth, alignment: .bottom)
+        .allowsHitTesting(false) // gradient nie blokuje kliknięć
 
-        Text(book.title)
-          .font(.title2.weight(.semibold))
-          .foregroundStyle(.white)
-          .multilineTextAlignment(.center)
-          .lineLimit(2)
+        
+      // TREŚĆ HERO
+      VStack(alignment: .leading, spacing: 16) {
+        Text("POLECANA")
+          .font(.footnote.weight(.semibold))
+          .kerning(1.1)
+          .foregroundStyle(.secondary)
+
+        Text(book.title ?? "")
+          .font(.custom("PPEditorialNew-Regular", size: 36))
+          .lineSpacing(3)
+          .fixedSize(horizontal: false, vertical: true)
 
         if let desc = book.description, !desc.isEmpty {
           Text(desc)
-            .font(.subheadline.weight(.regular))
-            .foregroundColor(.white.opacity(0.8))
-            .multilineTextAlignment(.center)
+            .font(.callout)
+            .foregroundStyle(.secondary)
             .lineLimit(2)
-            .padding(.bottom, 8)
         }
 
         Button {
           Haptics.tap(.soft)
-          showTitlePage = true
+          selectedBook = book
         } label: {
-          HStack(spacing: 8) {
-            Image(systemName: "book.fill")
-            Text("Czytaj")
-                .font(.subheadline.weight(.semibold))
-          }
-          .padding(.horizontal, 18)
-          .padding(.vertical, 10)
-          .background(.white)
-          .foregroundStyle(.black)
-          .clipShape(Capsule())
+          Label("Czytaj", systemImage: "book")
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .foregroundColor(.black)
         }
-        .buttonStyle(.plain)
-        .padding(.top, 4)
+        .background(Color.white, in: Capsule())
       }
-      .padding(.horizontal, 32)
-      .padding(.vertical, 24)
+      .frame(maxWidth: .infinity)
+      .padding(.top, screenWidth - 100)
+      .padding(.horizontal, 16)
+      .padding(.bottom, 40)
     }
     .frame(maxWidth: .infinity)
-    .sheet(isPresented: $showTitlePage) {
-      TitlePageView(book: book)
-        .presentationDragIndicator(.visible)         // show grabber
-        .presentationCornerRadius(32)                // nicer rounded corners
+  
+    .sheet(item: $selectedBook) { b in
+      TitlePageView(book: b)
+        .presentationDragIndicator(.visible)
+        .presentationCornerRadius(32)
     }
   }
+}
+
+
+#Preview {
+  ForYouView().preferredColorScheme(.dark)
 }
