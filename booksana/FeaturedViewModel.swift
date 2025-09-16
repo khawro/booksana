@@ -1,31 +1,28 @@
 import Foundation
 import Supabase
 
-@MainActor
 final class FeaturedViewModel: ObservableObject {
-  @Published var book: Book?
+  @Published var books: [Book] = []         // NOWE
   @Published var errorText: String?
 
-  func loadFeatured() async {
+  // ...
+  @MainActor
+  func loadFeaturedList(limit: Int = 3) async {
     do {
-        let res: [Book] = try await SupabaseManager.shared.client
-          .from("books")
-          .select(BookSelect.full)
-          .eq("featured", value: true)
-          .order("created_at", ascending: false)
-          .limit(1)
-          .execute()
-          .value
-        
-      self.book = res.first
-      self.errorText = nil
+      // pobiera max 3 książki z featured=true (dopasuj nazwę kolumny jeśli inna)
+      let result: [Book] = try await SupabaseManager.shared.client
+        .from("books")
+        .select()
+        .eq("featured", value: true)
+        .order("created_at", ascending: false)
+        .limit(limit)
+        .execute()
+        .value
+      self.books = result
     } catch {
-      print("Featured error:", error)
       self.errorText = error.localizedDescription
-      self.book = nil
+      self.books = []
     }
   }
 }
-
-
 

@@ -18,34 +18,33 @@ struct ForYouView: View {
             .padding(.horizontal, 16)
             .padding(.top, 16) */
 
-          Group() {
-              if let book = featuredVM.book {
-                FeaturedHeroView(book: book)   // <- nowy hero full-bleed
-              } else if let err = featuredVM.errorText {
-                // obsługa błędu
+            if !featuredVM.books.isEmpty {
+                FeaturedCarousel(books: featuredVM.books)
+            } else if let book = featuredVM.books.first {
+                FeaturedHeroView(book: book)
+            } else if let err = featuredVM.errorText {
                 VStack(spacing: 8) {
-                  Image(systemName: "exclamationmark.triangle")
-                  Text(err).font(.footnote).multilineTextAlignment(.center)
+                    Image(systemName: "exclamationmark.triangle")
+                    Text(err).font(.footnote).multilineTextAlignment(.center)
                 }
                 .foregroundStyle(.red)
                 .padding(.horizontal)
-              } else {
-                // SKELETON HERO (dopasowany do hero)
+            } else {
+                // skeleton dopasowany do hero
                 SkeletonHero()
-                  .frame(maxWidth: .infinity)
-                  .frame(height: screenWidth + 120)
-                  .redacted(reason: .placeholder)
-              }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: screenWidth + 148)
+                    .redacted(reason: .placeholder)
+                
             }
-          
-
         
-            
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 34) {
               // Wybrane
               VStack(alignment: .leading, spacing: 8) {
                 Text("Wybrane")
                   .font(.custom("PPEditorialNew-Regular", size: 30))
+                  .padding(.bottom, 8)
+                  .padding(.horizontal, 16)
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                   HStack(alignment: .top, spacing: 16) {
@@ -65,6 +64,7 @@ struct ForYouView: View {
                     }
                   }
                   .padding(.bottom, 8)
+                  .padding(.horizontal, 16)
                 }
               }
 
@@ -74,6 +74,8 @@ struct ForYouView: View {
                   VStack(alignment: .leading, spacing: 8) {
                     Text(cat.category_name)
                       .font(.custom("PPEditorialNew-Regular", size: 30))
+                      .padding(.horizontal, 16)
+                      .padding(.bottom, 8)
 
                     ScrollView(.horizontal, showsIndicators: false) {
                       HStack(alignment: .top, spacing: 16) {
@@ -88,6 +90,7 @@ struct ForYouView: View {
                         }
                       }
                       .padding(.bottom, 8)
+                      .padding(.horizontal, 16)
                     }
                   }
                 } else {
@@ -110,10 +113,10 @@ struct ForYouView: View {
                 }
               }
             }
-            .padding(.horizontal, 16)
+            .padding(.bottom, 40)
         }
       }.ignoresSafeArea(edges: .top)
-      .overlay(alignment: .top) {
+     /* .overlay(alignment: .top) {
         LinearGradient(
           gradient: Gradient(colors: [Color.black.opacity(0.6), Color.clear]),
           startPoint: .top,
@@ -121,15 +124,15 @@ struct ForYouView: View {
         )
         .frame(height: 60)
         .ignoresSafeArea(edges: .top)
-      }
+      }*/
       .sheet(item: $selectedBook) { book in
         TitlePageView(book: book)
           .presentationDragIndicator(.visible)
           .presentationCornerRadius(32)
       }
       .task {
-        await featuredVM.loadFeatured()
-        await selectedVM.loadSelected()
+          await featuredVM.loadFeaturedList(limit: 3)   // NOWE
+          await selectedVM.loadSelected()
           await categoriesVM.loadAll()
       }
     }
@@ -171,6 +174,46 @@ private struct SkeletonCarousel: View {
       ForEach(0..<4) { _ in
         SkeletonCard()
       }
+    }
+  }
+}
+
+// MARK: - CAROUSEL HERO
+
+private struct FeaturedCarousel: View {
+  let books: [Book]
+  @State private var index = 0
+  @State private var selectedBook: Book?
+    let screenWidth = UIScreen.main.bounds.width
+    
+  var body: some View {
+    VStack(spacing: 10) {
+      // Slider
+      TabView(selection: $index) {
+        ForEach(Array(books.enumerated()), id: \.offset) { (i, book) in
+          FeaturedHeroView(book: book)
+            .tag(i)
+            .contentShape(Rectangle())
+        }
+      }
+      .tabViewStyle(.page(indexDisplayMode: .never)) // ukrywamy systemowe kropki
+      .frame(height: screenWidth + 148)
+
+      // Dots pod hero
+      HStack(spacing: 8) {
+        ForEach(0..<min(books.count, 3), id: \.self) { i in
+          Circle()
+            .fill(i == index ? Color.white : Color.white.opacity(0.35))
+            .frame(width: i == index ? 8 : 6, height: i == index ? 8 : 6)
+        }
+      }
+      .frame(maxWidth: .infinity)
+      .padding(.bottom, 32)
+      .animation(.easeInOut(duration: 0.2), value: index)
+    }
+    // Swipe zmienia indeks
+    .onChange(of: books.count) { _, newValue in
+      index = min(index, max(0, newValue - 1))
     }
   }
 }
