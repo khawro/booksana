@@ -1,12 +1,14 @@
 import SwiftUI
+import WebKit
 
 struct TitlePageView: View {
   let book: Book
   @StateObject private var vm = TitlePageViewModel()
   @Environment(\.dismiss) private var dismiss
   @State private var showReader = false
-  @State private var readerURL: URL?
-
+  
+  @StateObject private var reader = ReaderLoader()
+    
   var body: some View {
     let bg = Color(hex: book.color_hex ?? "#173E68")  // fallback kolor
 
@@ -68,18 +70,31 @@ struct TitlePageView: View {
         Spacer()
         if let url = normalizedURL(from: book.book_url) {
           Button {
-            readerURL = url
-            showReader = true
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            reader.load(url: url)                  // start preload
           } label: {
-            Text("Rozpocznij")
-              .font(.headline)
-              .foregroundStyle(.black)
-              .frame(maxWidth: .infinity)
-              .padding(.vertical, 14)
-              .background(.white, in: Capsule())
+            Group {
+              if reader.isLoading || showReader {
+                HStack(spacing: 8) {
+                  ProgressView()
+                    .progressViewStyle(.circular)
+                    .tint(.black)
+                  Text("Wczytywanie…")
+                }
+              } else {
+                Text("Rozpocznij")
+              }
+            }
+            .font(.headline)
+            .foregroundStyle(.black)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(.white, in: Capsule())
           }
+          .disabled(reader.isLoading || showReader)
           .padding(.horizontal, 32)
           .padding(.bottom, 8)
+         
         } else {
           // Fallback – brak poprawnego URL
           Text("Rozpocznij")
@@ -98,32 +113,32 @@ struct TitlePageView: View {
       print("book.category =", String(describing: book.category))
       await vm.loadCategoryName(for: book.category)
     }
+    .onChange(of: reader.isLoading) { _, newValue in
+      if newValue == false, reader.webView != nil {
+        withAnimation(.easeInOut(duration: 0.22)) {
+          showReader = true
+        }
+      }
+    }
     .fullScreenCover(isPresented: $showReader) {
-      // Zawsze pokaż jakąś treść, nawet jeśli URL jeszcze nie ustawiony
-      let safeURL = readerURL ?? normalizedURL(from: book.book_url) ?? URL(string: "https://apple.com")!
-
       ZStack {
-        BookWebView(url: safeURL)
-          .ignoresSafeArea()
-
-        // Close button (X) in the top-left corner
-        VStack {
-          HStack {
-            Button {
+        if let wv = reader.webView {
+          BookWebView(webView: wv, onClose: {
+            withAnimation(.easeInOut(duration: 0.24)) {
+            //  showReader = false
               dismiss()
-            } label: {
-              Image(systemName: "xmark")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
-                .padding(10)
-                .background(.ultraThinMaterial, in: Circle())
             }
-            .buttonStyle(.plain)
-            .padding(.leading, 16)
-            .padding(.top, 8)
-            Spacer()
-          }
-          Spacer()
+          })
+          .ignoresSafeArea()
+        } else {
+          Color.black.ignoresSafeArea()
+        }
+      }
+    }
+    .onChange(of: showReader) { oldValue, newValue in
+      if oldValue == true && newValue == false {
+        withAnimation(.easeInOut(duration: 0.24)) {
+          dismiss()
         }
       }
     }
@@ -155,5 +170,4 @@ struct TitlePageView: View {
     book_url: "https://example.com",
     category: 1, color_hex: "#173E68"
   ))
-  .preferredColorScheme(.dark)
 }
