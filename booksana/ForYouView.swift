@@ -5,7 +5,6 @@ struct ForYouView: View {
   @StateObject private var selectedVM = SelectedBooksViewModel()
   @StateObject private var categoriesVM = CategoriesViewModel()
   @State private var selectedBook: Book?
-  @State private var showSlides = false
   let screenWidth = UIScreen.main.bounds.width
   var body: some View {
     NavigationStack {
@@ -13,22 +12,6 @@ struct ForYouView: View {
           
         VStack(alignment: .leading) {
           
-          // DEBUG: Test Slides button
-          Button {
-            Haptics.tap(.soft)
-            showSlides = true
-          } label: {
-            Text("Testuj slajdy (book id = 1)")
-              .font(.headline)
-              .foregroundColor(.white)
-              .padding(.vertical, 12)
-              .frame(maxWidth: .infinity)
-              .background(Color.blue)
-              .clipShape(RoundedRectangle(cornerRadius: 12))
-              .padding(.horizontal, 16)
-          }
-          .padding(.top, 64)
-
       /*  Text("Dla Ciebie")
             .font(.custom("PPEditorialNew-Regular", size: 40))
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -152,10 +135,6 @@ struct ForYouView: View {
           await selectedVM.loadSelected()
           await categoriesVM.loadAll()
       }
-      .fullScreenCover(isPresented: $showSlides) {
-        SlidesView(bookID: 1)
-          .ignoresSafeArea()
-      }
     }
   }
 }
@@ -242,3 +221,4 @@ private struct FeaturedCarousel: View {
 #Preview {
   ForYouView().preferredColorScheme(.dark)
 }
+

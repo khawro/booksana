@@ -8,6 +8,9 @@ struct TitlePageView: View {
   @State private var showReader = false
   
   @StateObject private var reader = ReaderLoader()
+  
+  @State private var showSlides = false
+  @State private var showUnavailableAlert = false
     
   var body: some View {
     let bg = Color(hex: book.color_hex ?? "#173E68")  // fallback kolor
@@ -71,7 +74,15 @@ struct TitlePageView: View {
         if let url = normalizedURL(from: book.book_url) {
           Button {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            reader.load(url: url)                  // start preload
+            Task {
+              let slides = await SlidesService.shared.fetchSlidesSafe(bookID: Int(book.id))
+              if slides.isEmpty {
+                showUnavailableAlert = true
+              } else {
+                showSlides = true
+              }
+            }
+            // reader.load(url: url)                  // start preload (commented out)
           } label: {
             Group {
               if reader.isLoading || showReader {
@@ -141,6 +152,15 @@ struct TitlePageView: View {
           dismiss()
         }
       }
+    }
+    .fullScreenCover(isPresented: $showSlides) {
+      SlidesView(bookID: book.id)
+        .ignoresSafeArea()
+    }
+    .alert("Książka niedostępna", isPresented: $showUnavailableAlert) {
+      Button("OK", role: .cancel) { }
+    } message: {
+      Text("Ta książka jest aktualnie niedostępna.")
     }
     .navigationBarTitleDisplayMode(.inline)
   }

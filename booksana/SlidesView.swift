@@ -7,7 +7,7 @@ private struct ImageHeightKey: PreferenceKey {
 }
 
 struct SlidesView: View {
-    let bookID: Int
+    let bookID: Int64
     @State private var slides: [Slide] = []
     @State private var currentIndex: Int = 0
     @State private var isLoading = true
@@ -109,7 +109,7 @@ struct SlidesView: View {
             }
         }
         .task {
-            let fetchedSlides = await SlidesService.shared.fetchSlidesSafe(bookID: bookID)
+            let fetchedSlides = await SlidesService.shared.fetchSlidesSafe(bookID: Int(bookID))
             // keep data locally first
             slides = fetchedSlides
             currentIndex = 0
@@ -559,5 +559,5 @@ extension NSColor {
 #endif
 
 #Preview {
-    SlidesView(bookID: 1)
+    SlidesView(bookID: Int64(1))
 }
