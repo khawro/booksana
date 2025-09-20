@@ -32,54 +32,57 @@ struct SavedView: View {
         } else {
           // Books grid
           ScrollView {
-            LazyVGrid(columns: columns, spacing: 16) {
-              ForEach(savedBooksManager.savedBooks, id: \.id) { book in
-                Button {
-                  Haptics.tap(.soft)
-                  selectedBook = book
-                } label: {
-                  ZStack(alignment: .bottomLeading) {
-                    GeometryReader { geometry in
-                      let size = geometry.size.width
+            VStack(alignment: .leading, spacing: 16) {
+              // Title inside scroll
+              Text("Zapisane")
+                .font(.custom("PPEditorialNew-Regular", size: 40))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.top, 32)
 
-                      CachedCoverView(urlString: book.cover)
-                        .frame(width: size, height: size)
-                        .background(Color.gray.opacity(0.2))
-                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                    }
-                    .aspectRatio(1, contentMode: .fit)
+              LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(savedBooksManager.savedBooks, id: \.id) { book in
+                  Button {
+                    Haptics.tap(.soft)
+                    selectedBook = book
+                  } label: {
+                    ZStack(alignment: .bottomLeading) {
+                      GeometryReader { geometry in
+                        let size = geometry.size.width
 
-                    // Gradient overlay for readability
-                    LinearGradient(
-                      colors: [Color.black.opacity(0.0), Color.black.opacity(0.7)],
-                      startPoint: .top,
-                      endPoint: .bottom
-                    )
-                    .frame(height: 70)
-                    .frame(maxWidth: .infinity, alignment: .bottom)
-                    .allowsHitTesting(false)
-                    .mask(
-                      VStack(spacing: 0) {
-                        Spacer()
-                        Rectangle()
+                        CachedCoverView(urlString: book.cover)
+                          .frame(width: size, height: size)
+                          .background(Color.gray.opacity(0.2))
+                          .clipShape(RoundedRectangle(cornerRadius: 20))
                       }
-                    )
+                      .aspectRatio(1, contentMode: .fit)
 
-                    // Title over image
-                    Text(book.title)
-                      .font(.subheadline)
-                      .fontWeight(.semibold)
-                      .foregroundStyle(.white)
-                      .lineLimit(2)
-                      .shadow(color: Color.black.opacity(0.7), radius: 3, x: 0, y: 1)
-                      .padding(10)
+                      // Gradient overlay for readability
+                      LinearGradient(
+                        colors: [Color.black.opacity(0), Color.black.opacity(0.7)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                      )
+                      .frame(height: 70)
+                      .frame(maxWidth: .infinity, alignment: .bottom)
+                      .allowsHitTesting(false)
+                 
+                      // Title over image
+                      Text(book.title)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                        .shadow(color: Color.black.opacity(0.7), radius: 3, x: 0, y: 1)
+                        .padding(10)
+                    }
                   }
+                  .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
               }
+              .padding(.horizontal, 16)
+              .padding(.bottom, 40)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 40)
           }
           .refreshable {
             await savedBooksManager.refreshSavedBooks()
@@ -87,22 +90,6 @@ struct SavedView: View {
         }
       }
       .toolbar(.hidden, for: .navigationBar)
-      .safeAreaInset(edge: .top) {
-        Group {
-          if !savedBooksManager.savedBooks.isEmpty {
-            VStack(spacing: 0) {
-              // Match SearchView header style
-              Text("Zapisane")
-                .font(.custom("PPEditorialNew-Regular", size: 40))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.top, 32)
-                .padding(.bottom, 8)
-            }
-          }
-        }
-        .background(Color.clear)
-      }
       .overlay {
         if savedBooksManager.isLoading {
           ProgressView("Ładowanie...")
