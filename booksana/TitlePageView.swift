@@ -11,6 +11,9 @@ struct TitlePageView: View {
   
   @State private var showSlides = false
   @State private var showUnavailableAlert = false
+  
+  @State private var isBookmarked: Bool = false
+  @StateObject private var savedBooksManager = SavedBooksManager.shared
     
   var body: some View {
     let bg = Color(hex: book.color_hex ?? "#173E68")  // fallback kolor
@@ -21,21 +24,29 @@ struct TitlePageView: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 16) {
 
-          // Okładka
-          AsyncImage(url: URL(string: book.cover ?? "")) { phase in
-            switch phase {
-            case .success(let image):
-              image.resizable().scaledToFill()
-            default:
-              Color.white.opacity(0.08)
+          // Okładka + przycisk bookmark w prawym górnym rogu
+          ZStack(alignment: .topTrailing) {
+            CachedCoverView(urlString: book.cover)
+              .frame(width: UIScreen.main.bounds.width - 64, height: UIScreen.main.bounds.width - 64)
+              .clipShape(RoundedRectangle(cornerRadius: 22))
+              .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 6)
+
+            Button {
+              UIImpactFeedbackGenerator(style: .light).impactOccurred()
+              isBookmarked = savedBooksManager.toggleBookmark(for: book)
+            } label: {
+              Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(10)
+                .background(.ultraThinMaterial, in: Circle())
             }
+            .padding(14)
           }
-          .frame(width: UIScreen.main.bounds.width - 64, height: UIScreen.main.bounds.width - 64)
-          .clipShape(RoundedRectangle(cornerRadius: 22))
-          .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 6)
           .padding(.horizontal, 32)
           .padding(.top, 32)
           .padding(.bottom, 16)
+          
 
           // Kategoria • Extra
           HStack(spacing: 8) {
@@ -68,6 +79,9 @@ struct TitlePageView: View {
               .padding(.bottom, 64)
           }
         }
+      }
+      .task {
+        isBookmarked = savedBooksManager.isBookmarked(book.id)
       }
       VStack {
         Spacer()
@@ -123,6 +137,9 @@ struct TitlePageView: View {
     .task {
       print("book.category =", String(describing: book.category))
       await vm.loadCategoryName(for: book.category)
+      
+      // Cache the book
+      BookCache.shared.cacheBook(book)
     }
     .onChange(of: reader.isLoading) { _, newValue in
       if newValue == false, reader.webView != nil {
@@ -180,6 +197,8 @@ struct TitlePageView: View {
   }
 }
 
+
+
 #Preview {
   TitlePageView(book: Book(
     id: 1, title: "Zostań Stoikiem XXI wieku",
@@ -191,3 +210,4 @@ struct TitlePageView: View {
     category: 1, color_hex: "#173E68"
   ))
 }
+

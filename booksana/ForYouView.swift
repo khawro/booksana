@@ -33,7 +33,7 @@ struct ForYouView: View {
                 // skeleton dopasowany do hero
                 SkeletonHero()
                     .frame(maxWidth: .infinity)
-                    .frame(height: screenWidth + 148)
+                    .frame(height: screenWidth + 198)
                     .redacted(reason: .placeholder)
                 
             }
@@ -134,6 +134,27 @@ struct ForYouView: View {
           await featuredVM.loadFeaturedList(limit: 3)   // NOWE
           await selectedVM.loadSelected()
           await categoriesVM.loadAll()
+          
+          // Cache all loaded books
+          for book in featuredVM.books {
+              BookCache.shared.cacheBook(book)
+          }
+          for book in selectedVM.books {
+              BookCache.shared.cacheBook(book)
+          }
+          for (_, books) in categoriesVM.booksByCategory {
+              for book in books {
+                  BookCache.shared.cacheBook(book)
+              }
+          }
+          
+          // Prefetch all covers once (deduplicate by id without requiring Hashable)
+          var uniqueByID: [Int64: Book] = [:]
+          for b in featuredVM.books { uniqueByID[b.id] = b }
+          for b in selectedVM.books { uniqueByID[b.id] = b }
+          for list in categoriesVM.booksByCategory.values { for b in list { uniqueByID[b.id] = b } }
+          let allBooks = Array(uniqueByID.values)
+          await CoverPrefetcher.shared.prefetchIfNeeded(books: allBooks)
       }
     }
   }
@@ -144,9 +165,9 @@ private struct SkeletonHero: View {
   var body: some View {
     ZStack(alignment: .bottom) {
       Rectangle()
-        .fill(Color.gray.opacity(0.18))
-      LinearGradient(colors: [.clear, .black.opacity(0.15), .black.opacity(0.35)], startPoint: .top, endPoint: .bottom)
-        .frame(height: 160)
+        .fill(Color.gray.opacity(0.3))
+      LinearGradient(colors: [.clear, .black.opacity(0), .black.opacity(1)], startPoint: .top, endPoint: .bottom)
+        .frame(height: 500)
         .allowsHitTesting(false)
     }
   }
@@ -157,7 +178,7 @@ private struct SkeletonCard: View {
     VStack(alignment: .leading, spacing: 10) {
       RoundedRectangle(cornerRadius: 18)
         .fill(Color.gray.opacity(0.18))
-        .frame(width: 140, height: 200)
+        .frame(width: 158, height: 158)
       RoundedRectangle(cornerRadius: 6)
         .fill(Color.gray.opacity(0.2))
         .frame(width: 120, height: 14)

@@ -20,7 +20,8 @@ struct SlidesView: View {
                 Color.black
                     .ignoresSafeArea()
                 ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .tint(.white)
+                    .progressViewStyle(.circular)
                     .scaleEffect(2)
             } else if slides.isEmpty {
                 Color.black
@@ -75,7 +76,7 @@ struct SlidesView: View {
                                     let target = currentIndex - 1
                                     // Prefetch image only (videos load on demand)
                                     if let url = slides[target].image_url {
-                                        Task { _ = await ImageCache.shared.prefetch(url: url) }
+                                        Task { _ = await ImageCache.shared.fetchIfNeeded(from: url) }
                                     }
                                     DispatchQueue.main.async {
                                         withAnimation(.easeInOut(duration: 0.28)) {
@@ -92,7 +93,7 @@ struct SlidesView: View {
                                     let target = currentIndex + 1
                                     // Prefetch image only (videos load on demand)
                                     if let url = slides[target].image_url {
-                                        Task { _ = await ImageCache.shared.prefetch(url: url) }
+                                        Task { _ = await ImageCache.shared.fetchIfNeeded(from: url) }
                                     }
                                     DispatchQueue.main.async {
                                         withAnimation(.easeInOut(duration: 0.28)) {
@@ -185,34 +186,15 @@ struct SlidesView: View {
         await withTaskGroup(of: Void.self) { group in
             for slide in slides {
                 if let url = slide.image_url {
-                    group.addTask { _ = await ImageCache.shared.prefetch(url: url) }
+                    group.addTask {
+                        _ = await ImageCache.shared.fetchIfNeeded(from: url)
+                    }
                 }
-                // Note: Videos are not prefetched to save memory and bandwidth
-                // They will be loaded on demand when the slide becomes active
             }
         }
     }
 }
 
-final class ImageCache {
-    static let shared = ImageCache()
-    private let cache = NSCache<NSURL, UIImage>()
-    private init() { cache.countLimit = 200 }
-
-    func image(for url: URL) -> UIImage? { cache.object(forKey: url as NSURL) }
-
-    func store(_ image: UIImage, for url: URL) { cache.setObject(image, forKey: url as NSURL) }
-
-    @discardableResult
-    func prefetch(url: URL) async -> UIImage? {
-        if let img = image(for: url) { return img }
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            if let img = UIImage(data: data) { store(img, for: url); return img }
-        } catch { }
-        return nil
-    }
-}
 
 struct CachedImageView: View {
     let url: URL
@@ -234,22 +216,20 @@ struct CachedImageView: View {
         }
         .task(id: url) {
             // show cached immediately if present
-            if let cached = ImageCache.shared.image(for: url) {
+            if let cached = await ImageCache.shared.image(for: url) {
                 currentImage = cached
                 opacity = 1.0
             }
             // fetch (or refetch) and crossfade if new data arrives
-            if let fetched = await ImageCache.shared.prefetch(url: url) {
+            if let fetched = await ImageCache.shared.fetchIfNeeded(from: url) {
                 if currentImage == nil {
                     currentImage = fetched
                     opacity = 1.0
                 } else if currentImage !== fetched {
-                    targetImage = fetched
                     withAnimation(.easeInOut(duration: 0.25)) { opacity = 0.0 }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                         currentImage = fetched
                         opacity = 1.0
-                        targetImage = nil
                     }
                 }
             }
