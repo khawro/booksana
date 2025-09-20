@@ -153,8 +153,10 @@ struct ForYouView: View {
           for b in featuredVM.books { uniqueByID[b.id] = b }
           for b in selectedVM.books { uniqueByID[b.id] = b }
           for list in categoriesVM.booksByCategory.values { for b in list { uniqueByID[b.id] = b } }
-          let allBooks = Array(uniqueByID.values)
-          await CoverPrefetcher.shared.prefetchIfNeeded(books: allBooks)
+          await AppStartup.shared.prefetchIfNeeded(
+              books: Array(uniqueByID.values),
+              categories: categoriesVM.categories
+          )
       }
     }
   }

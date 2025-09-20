@@ -68,6 +68,11 @@ struct SearchView: View {
       .task {
           await latestVM.loadLatest()
           await catsVM.loadAll()
+          // Ensure startup prefetch runs if user lands here first
+          await AppStartup.shared.prefetchIfNeeded(
+              books: latestVM.books,
+              categories: catsVM.categories
+          )
       }
       .navigationTitle("") // duży własny nagłówek, bez tytułu w pasku
       .navigationBarTitleDisplayMode(.inline)
