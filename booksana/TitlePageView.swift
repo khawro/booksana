@@ -85,53 +85,38 @@ struct TitlePageView: View {
       }
       VStack {
         Spacer()
-        if let url = normalizedURL(from: book.book_url) {
-          Button {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            Task {
-              let slides = await SlidesService.shared.fetchSlidesSafe(bookID: Int(book.id))
-              if slides.isEmpty {
-                showUnavailableAlert = true
-              } else {
-                showSlides = true
-              }
+        Button {
+          UIImpactFeedbackGenerator(style: .light).impactOccurred()
+          Task {
+            let slides = await SlidesService.shared.fetchSlidesSafe(bookID: Int(book.id))
+            if slides.isEmpty {
+              showUnavailableAlert = true
+            } else {
+              showSlides = true
             }
-            // reader.load(url: url)                  // start preload (commented out)
-          } label: {
-            Group {
-              if reader.isLoading || showReader {
-                HStack(spacing: 8) {
-                  ProgressView()
-                    .progressViewStyle(.circular)
-                    .tint(.black)
-                  Text("Wczytywanie…")
-                }
-              } else {
-                Text("Rozpocznij")
-              }
-            }
-            .font(.headline)
-            .foregroundStyle(.black)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(.white, in: Capsule())
           }
-          .disabled(reader.isLoading || showReader)
-          .padding(.horizontal, 32)
-          .padding(.bottom, 8)
-         
-        } else {
-          // Fallback – brak poprawnego URL
-          Text("Rozpocznij")
-            .font(.headline)
-            .foregroundStyle(.black.opacity(0.4))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(.white.opacity(0.5), in: Capsule())
-            .padding(.horizontal, 32)
-            .padding(.bottom, 8)
-            .disabled(true)
+        } label: {
+          Group {
+            if reader.isLoading || showReader {
+              HStack(spacing: 8) {
+                ProgressView()
+                  .progressViewStyle(.circular)
+                  .tint(.black)
+                Text("Wczytywanie…")
+              }
+            } else {
+              Text("Rozpocznij")
+            }
+          }
+          .font(.headline)
+          .foregroundStyle(.black)
+          .frame(maxWidth: .infinity)
+          .padding(.vertical, 14)
+          .background(.white, in: Capsule())
         }
+        .disabled(reader.isLoading || showReader)
+        .padding(.horizontal, 32)
+        .padding(.bottom, 8)
       }
     }
     .task {
