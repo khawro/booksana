@@ -12,6 +12,7 @@ class SavedBooksManager: ObservableObject {
     @Published var savedBookIds: Set<Int64> = []
     @Published var savedBooks: [Book] = []
     @Published var isLoading: Bool = false
+    @Published var errorText: String? = nil
     
     private let userDefaults = UserDefaults.standard
     private let savedBooksKey = "saved_books_with_timestamps"
@@ -66,6 +67,7 @@ class SavedBooksManager: ObservableObject {
     
     func loadSavedBooks() async {
         isLoading = true
+        errorText = nil
         
         let bookmarks = loadBookmarks()
         savedBookIds = Set(bookmarks.map { $0.bookId })
@@ -76,6 +78,7 @@ class SavedBooksManager: ObservableObject {
         
         sortSavedBooks()
         
+        errorText = nil
         isLoading = false
     }
     

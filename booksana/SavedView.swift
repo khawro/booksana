@@ -1,8 +1,12 @@
 import SwiftUI
+import Network
 
 struct SavedView: View {
   @StateObject private var savedBooksManager = SavedBooksManager.shared
   @State private var selectedBook: Book?
+  
+  @State private var isOffline: Bool = false
+  @State private var pathMonitor: NWPathMonitor? = nil
   
   private let columns = [
     GridItem(.flexible(), spacing: 16),
@@ -13,22 +17,31 @@ struct SavedView: View {
     NavigationStack {
       Group {
         if savedBooksManager.savedBooks.isEmpty && !savedBooksManager.isLoading {
-          // Empty state
-          VStack(spacing: 24) {
-            Image(systemName: "bookmark")
-              .font(.system(size: 60))
-              .fontWeight(.thin)
-              .opacity(0.5)
-            Text("Brak zapisanych")
-              .font(.custom("PPEditorialNew-Regular", size: 30))
-            Text("Kliknij ikonkę zakładki na górze okładki aby zapisać.")
-              .font(.subheadline)
-              .multilineTextAlignment(.center)
-              .padding(.horizontal)
-              .foregroundStyle(.secondary)
+          if isOffline {
+            // Offline/error state
+            OfflineStateView {
+              Task { await savedBooksManager.refreshSavedBooks() }
+            }
+            .frame(maxWidth: .infinity, minHeight: UIScreen.main.bounds.height)
+            .ignoresSafeArea(edges: .top)
+          } else {
+            // Normal empty state
+            VStack(spacing: 24) {
+              Image(systemName: "bookmark")
+                .font(.system(size: 60))
+                .fontWeight(.thin)
+                .opacity(0.5)
+              Text("Brak zapisanych")
+                .font(.custom("PPEditorialNew-Regular", size: 30))
+              Text("Kliknij ikonkę zakładki na górze okładki aby zapisać.")
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+                .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .padding(.horizontal)
           }
-          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-          .padding(.horizontal)
         } else {
           // Books grid
           ScrollView {
@@ -59,14 +72,20 @@ struct SavedView: View {
 
                       // Gradient overlay for readability
                       LinearGradient(
-                        colors: [Color.black.opacity(0), Color.black.opacity(0.7)],
+                        colors: [Color.black.opacity(0.0), Color.black.opacity(0.7)],
                         startPoint: .top,
                         endPoint: .bottom
                       )
-                      .frame(height: 70)
+                      .frame(height: 80)
                       .frame(maxWidth: .infinity, alignment: .bottom)
                       .allowsHitTesting(false)
-                 
+                      .mask(
+                        VStack(spacing: 0) {
+                          Spacer()
+                          Rectangle()
+                        }
+                      )
+
                       // Title over image
                       Text(book.title)
                         .font(.subheadline)
@@ -83,9 +102,6 @@ struct SavedView: View {
               .padding(.horizontal, 16)
               .padding(.bottom, 40)
             }
-          }
-          .refreshable {
-            await savedBooksManager.refreshSavedBooks()
           }
         }
       }
@@ -104,6 +120,21 @@ struct SavedView: View {
       }
       .task {
         await savedBooksManager.loadSavedBooks()
+      }
+      .onAppear {
+        let monitor = NWPathMonitor()
+        monitor.pathUpdateHandler = { path in
+          DispatchQueue.main.async {
+            isOffline = (path.status != .satisfied)
+          }
+        }
+        let queue = DispatchQueue(label: "SavedView.NetworkMonitor")
+        monitor.start(queue: queue)
+        pathMonitor = monitor
+      }
+      .onDisappear {
+        pathMonitor?.cancel()
+        pathMonitor = nil
       }
     }
   }

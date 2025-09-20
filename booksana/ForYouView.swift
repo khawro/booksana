@@ -9,43 +9,36 @@ struct ForYouView: View {
   var body: some View {
     NavigationStack {
       ScrollView {
-          
         VStack(alignment: .leading) {
-          
-      /*  Text("Dla Ciebie")
-            .font(.custom("PPEditorialNew-Regular", size: 40))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16)
-            .padding(.top, 16) */
+          let isOffline = featuredVM.books.isEmpty && selectedVM.books.isEmpty && categoriesVM.categories.isEmpty && (featuredVM.errorText != nil || selectedVM.errorText != nil)
 
-            if !featuredVM.books.isEmpty {
-                FeaturedCarousel(books: featuredVM.books)
-            } else if let book = featuredVM.books.first {
-                FeaturedHeroView(book: book)
-            } else if let err = featuredVM.errorText {
-                VStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle")
-                    Text(err).font(.footnote).multilineTextAlignment(.center)
-                }
-                .foregroundStyle(.red)
-                .padding(.horizontal)
-            } else {
-                // skeleton dopasowany do hero
-                SkeletonHero()
-                    .frame(maxWidth: .infinity)
-                    .frame(height: screenWidth + 198)
-                    .redacted(reason: .placeholder)
-                
+          if isOffline {
+            OfflineStateView {
+              Task {
+                await featuredVM.loadFeaturedList(limit: 3)
+                await selectedVM.loadSelected()
+                await categoriesVM.loadAll()
+              }
             }
-        
+           // .padding(.top, 16)
+          } else {
+            if !featuredVM.books.isEmpty {
+              FeaturedCarousel(books: featuredVM.books)
+            } else if let _ = featuredVM.books.first {
+              FeaturedHeroView(book: featuredVM.books.first!)
+            } else {
+              SkeletonHero()
+                .frame(maxWidth: .infinity)
+                .frame(height: screenWidth + 198)
+                .redacted(reason: .placeholder)
+            }
+
             VStack(alignment: .leading, spacing: 34) {
-              // Wybrane
               VStack(alignment: .leading, spacing: 8) {
                 Text("Wybrane")
                   .font(.custom("PPEditorialNew-Regular", size: 30))
                   .padding(.bottom, 8)
                   .padding(.horizontal, 16)
-                
                 ScrollView(.horizontal, showsIndicators: false) {
                   HStack(alignment: .top, spacing: 16) {
                     if selectedVM.books.isEmpty {
@@ -68,7 +61,6 @@ struct ForYouView: View {
                 }
               }
 
-              // Sekcje po kategoriach
               ForEach(categoriesVM.categories, id: \.id) { cat in
                 if let books = categoriesVM.booksByCategory[cat.id], !books.isEmpty {
                   VStack(alignment: .leading, spacing: 8) {
@@ -76,7 +68,6 @@ struct ForYouView: View {
                       .font(.custom("PPEditorialNew-Regular", size: 30))
                       .padding(.horizontal, 16)
                       .padding(.bottom, 8)
-
                     ScrollView(.horizontal, showsIndicators: false) {
                       HStack(alignment: .top, spacing: 16) {
                         ForEach(books, id: \.id) { book in
@@ -94,14 +85,12 @@ struct ForYouView: View {
                     }
                   }
                 } else {
-                  // SKELETON dla kategorii w trakcie ładowania
                   VStack(alignment: .leading, spacing: 8) {
                     Rectangle()
                       .fill(Color.gray.opacity(0.2))
                       .frame(width: 160, height: 20)
                       .cornerRadius(6)
                       .redacted(reason: .placeholder)
-
                     ScrollView(.horizontal, showsIndicators: false) {
                       HStack(alignment: .top, spacing: 16) {
                         SkeletonCarousel()
@@ -114,9 +103,12 @@ struct ForYouView: View {
               }
             }
             .padding(.bottom, 40)
+          }
         }
-      }.ignoresSafeArea(edges: .top)
-     /* .overlay(alignment: .top) {
+        .frame(maxWidth: .infinity, minHeight: UIScreen.main.bounds.height)
+      }
+      .ignoresSafeArea(edges: .top)
+      /* .overlay(alignment: .top) {
         LinearGradient(
           gradient: Gradient(colors: [Color.black.opacity(0.6), Color.clear]),
           startPoint: .top,
@@ -131,33 +123,29 @@ struct ForYouView: View {
           .presentationCornerRadius(32)
       }
       .task {
-          await featuredVM.loadFeaturedList(limit: 3)   // NOWE
-          await selectedVM.loadSelected()
-          await categoriesVM.loadAll()
-          
-          // Cache all loaded books
-          for book in featuredVM.books {
-              BookCache.shared.cacheBook(book)
-          }
-          for book in selectedVM.books {
-              BookCache.shared.cacheBook(book)
-          }
-          for (_, books) in categoriesVM.booksByCategory {
-              for book in books {
-                  BookCache.shared.cacheBook(book)
-              }
-          }
-          
-          // Prefetch all covers once (deduplicate by id without requiring Hashable)
-          var uniqueByID: [Int64: Book] = [:]
-          for b in featuredVM.books { uniqueByID[b.id] = b }
-          for b in selectedVM.books { uniqueByID[b.id] = b }
-          for list in categoriesVM.booksByCategory.values { for b in list { uniqueByID[b.id] = b } }
-          await AppStartup.shared.prefetchIfNeeded(
-              books: Array(uniqueByID.values),
-              categories: categoriesVM.categories
-          )
+        await featuredVM.loadFeaturedList(limit: 3)
+        await selectedVM.loadSelected()
+        await categoriesVM.loadAll()
+
+        // Cache all loaded books
+        for book in featuredVM.books { BookCache.shared.cacheBook(book) }
+        for book in selectedVM.books { BookCache.shared.cacheBook(book) }
+        for (_, books) in categoriesVM.booksByCategory {
+          for book in books { BookCache.shared.cacheBook(book) }
+        }
+
+        // Prefetch all covers once (deduplicate by id without requiring Hashable)
+        var uniqueByID: [Int64: Book] = [:]
+        for b in featuredVM.books { uniqueByID[b.id] = b }
+        for b in selectedVM.books { uniqueByID[b.id] = b }
+        for list in categoriesVM.booksByCategory.values { for b in list { uniqueByID[b.id] = b } }
+        await AppStartup.shared.prefetchIfNeeded(
+          books: Array(uniqueByID.values),
+          categories: categoriesVM.categories
+        )
       }
+      // .navigationTitle("Dla Ciebie")
+      // .navigationBarTitleDisplayMode(.inline)
     }
   }
 }
@@ -208,7 +196,7 @@ private struct FeaturedCarousel: View {
   @State private var index = 0
   @State private var selectedBook: Book?
   let screenWidth = UIScreen.main.bounds.width
-    
+
   var body: some View {
     VStack(spacing: 10) {
       // Slider
@@ -244,4 +232,3 @@ private struct FeaturedCarousel: View {
 #Preview {
   ForYouView().preferredColorScheme(.dark)
 }
-
