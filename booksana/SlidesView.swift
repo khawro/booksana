@@ -377,6 +377,14 @@ private struct SlideLayerView: View {
         let fields = [slide.eyebrow, slide.title_1, slide.title_2, slide.lead, slide.body]
         return fields.contains { ($0?.isEmpty == false) }
     }
+    
+    private func normalizeNewlines(_ s: String) -> String {
+        // Convert CRLF and CR to LF and replace literal \n with actual newlines
+        return s
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .replacingOccurrences(of: "\\n", with: "\n")
+    }
 
     @ViewBuilder
     private func textContent() -> some View {
@@ -405,19 +413,28 @@ private struct SlideLayerView: View {
                         .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
                 }
                 if let body = slide.body, !body.isEmpty {
-                    if let attributed = try? AttributedString(markdown: body) {
-                        Text(attributed)
-                            .font(.system(size: 17).weight(.regular))
-                            .opacity(0.9)
-                            .lineSpacing(5)
-                            .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
-                    } else {
-                        Text(body)
-                            .font(.system(size: 17).weight(.regular))
-                            .opacity(0.9)
-                            .lineSpacing(5)
-                            .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+                    let normalized = normalizeNewlines(body)
+                    let paragraphs = normalized.components(separatedBy: "\n\n")
+                    VStack(spacing: 20) {
+                        ForEach(paragraphs.indices, id: \.self) { i in
+                            let para = paragraphs[i]
+                            let paraWithHardBreaks = para.replacingOccurrences(of: "\n", with: "  \n")
+                            if let attributed = try? AttributedString(markdown: paraWithHardBreaks) {
+                                Text(attributed)
+                                    .font(.system(size: 17).weight(.regular))
+                                    .opacity(0.9)
+                                    .lineSpacing(5)
+                                    .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+                            } else {
+                                Text(para)
+                                    .font(.system(size: 17).weight(.regular))
+                                    .opacity(0.9)
+                                    .lineSpacing(5)
+                                    .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+                            }
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
                 }
             }
             .foregroundColor(slideColor(from: slide.content_color))
@@ -551,3 +568,4 @@ extension NSColor {
 #Preview {
     SlidesView(bookID: Int64(1))
 }
+
