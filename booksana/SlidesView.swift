@@ -8,11 +8,17 @@ private struct ImageHeightKey: PreferenceKey {
 
 struct SlidesView: View {
     let bookID: Int64
+    let onClose: (() -> Void)?
     @State private var slides: [Slide] = []
     @State private var currentIndex: Int = 0
     @State private var isLoading = true
     @State private var imageHeight: CGFloat = 0
     @Environment(\.dismiss) private var dismiss
+
+    init(bookID: Int64, onClose: (() -> Void)? = nil) {
+        self.bookID = bookID
+        self.onClose = onClose
+    }
     
     var body: some View {
         ZStack {
@@ -45,7 +51,9 @@ struct SlidesView: View {
                 }
                 .overlay(alignment: .topLeading) {
                     // X close button with glass effect
-                    Button(action: { dismiss() }) {
+                    Button(action: {
+                        onClose?()
+                    }) {
                         Image(systemName: "xmark")
                             .foregroundColor(.white)
                             .font(.system(size: 16, weight: .semibold))

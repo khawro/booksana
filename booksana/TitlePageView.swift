@@ -156,8 +156,12 @@ struct TitlePageView: View {
       }
     }
     .fullScreenCover(isPresented: $showSlides) {
-      SlidesView(bookID: book.id)
-        .ignoresSafeArea()
+      SlidesView(bookID: book.id, onClose: {
+        withAnimation {
+          dismiss()
+        }
+      })
+      .ignoresSafeArea()
     }
     .alert("Książka niedostępna", isPresented: $showUnavailableAlert) {
       Button("OK", role: .cancel) { }
