@@ -405,9 +405,19 @@ private struct SlideLayerView: View {
                         .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
                 }
                 if let body = slide.body, !body.isEmpty {
-                    Text(body).font(.system(size: 17).weight(.regular)).opacity(0.9)
-                        .lineSpacing(5)
-                        .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+                    if let attributed = try? AttributedString(markdown: body) {
+                        Text(attributed)
+                            .font(.system(size: 17).weight(.regular))
+                            .opacity(0.9)
+                            .lineSpacing(5)
+                            .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+                    } else {
+                        Text(body)
+                            .font(.system(size: 17).weight(.regular))
+                            .opacity(0.9)
+                            .lineSpacing(5)
+                            .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+                    }
                 }
             }
             .foregroundColor(slideColor(from: slide.content_color))
