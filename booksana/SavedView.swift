@@ -79,12 +79,6 @@ struct SavedView: View {
                       .frame(height: 80)
                       .frame(maxWidth: .infinity, alignment: .bottom)
                       .allowsHitTesting(false)
-                      .mask(
-                        VStack(spacing: 0) {
-                          Spacer()
-                          Rectangle()
-                        }
-                      )
 
                       // Title over image
                       Text(book.title)
