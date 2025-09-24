@@ -13,6 +13,8 @@ struct SlidesView: View {
     @State private var currentIndex: Int = 0
     @State private var isLoading = true
     @State private var imageHeight: CGFloat = 0
+    @State private var showErrorAlert: Bool = false
+    @State private var errorMessage: String? = nil
     @Environment(\.dismiss) private var dismiss
 
     init(bookID: Int64, onClose: (() -> Void)? = nil) {
@@ -32,9 +34,11 @@ struct SlidesView: View {
             } else if slides.isEmpty {
                 Color.black
                     .ignoresSafeArea()
-                Text("No slides available")
-                    .foregroundColor(.white)
-                    .font(.title2)
+                if !showErrorAlert {
+                    Text("No slides available")
+                        .foregroundColor(.white)
+                        .font(.title2)
+                }
             } else {
                 SlideLayerView(slide: slides[currentIndex])
                     .ignoresSafeArea()
@@ -118,15 +122,32 @@ struct SlidesView: View {
             }
         }
         .task {
-            let fetchedSlides = await SlidesService.shared.fetchSlidesSafe(bookID: Int(bookID))
-            // keep data locally first
-            slides = fetchedSlides
-            currentIndex = 0
-            // prefetch all images before showing UI
-            await prefetchImages(for: fetchedSlides)
-            withAnimation(.easeInOut(duration: 0.25)) {
-                isLoading = false
+            do {
+                let fetchedSlides = try await SlidesService.shared.fetchSlides(bookID: Int(bookID))
+                // keep data locally first
+                slides = fetchedSlides
+                currentIndex = 0
+                // prefetch all images before showing UI
+                await prefetchImages(for: fetchedSlides)
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    isLoading = false
+                }
+            } catch {
+                // Do not show demo slides; show an error popup instead
+                #if DEBUG
+                print("SlidesView: fetch error: \(error)")
+                #endif
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    isLoading = false
+                }
+                errorMessage = "Nie udało się wczytać slajdów. Spróbuj ponownie później."
+                showErrorAlert = true
             }
+        }
+        .alert("Coś poszło nie tak", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage ?? "Wystąpił nieoczekiwany błąd.")
         }
     }
     
