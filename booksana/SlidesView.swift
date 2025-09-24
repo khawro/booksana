@@ -1,5 +1,6 @@
 import SwiftUI
 import AVKit
+import Foundation
 
 private struct ImageHeightKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
@@ -90,6 +91,9 @@ struct SlidesView: View {
                                     if let url = slides[target].image_url {
                                         Task { _ = await ImageCache.shared.fetchIfNeeded(from: url) }
                                     }
+                                    if let vurl = slides[target].video_mp4_url {
+                                        Task { _ = await VideoCache.shared.fetchIfNeeded(from: vurl) }
+                                    }
                                     DispatchQueue.main.async {
                                         withAnimation(.easeInOut(duration: 0.5)) {
                                             currentIndex = target
@@ -106,6 +110,9 @@ struct SlidesView: View {
                                     // Prefetch image only (videos load on demand)
                                     if let url = slides[target].image_url {
                                         Task { _ = await ImageCache.shared.fetchIfNeeded(from: url) }
+                                    }
+                                    if let vurl = slides[target].video_mp4_url {
+                                        Task { _ = await VideoCache.shared.fetchIfNeeded(from: vurl) }
                                     }
                                     DispatchQueue.main.async {
                                         withAnimation(.easeInOut(duration: 0.5)) {
@@ -127,8 +134,9 @@ struct SlidesView: View {
                 // keep data locally first
                 slides = fetchedSlides
                 currentIndex = 0
-                // prefetch all images before showing UI
+                // prefetch all images and videos before showing UI
                 await prefetchImages(for: fetchedSlides)
+                await prefetchVideos(for: fetchedSlides)
                 withAnimation(.easeInOut(duration: 0.25)) {
                     isLoading = false
                 }
@@ -149,6 +157,7 @@ struct SlidesView: View {
         } message: {
             Text(errorMessage ?? "Wystąpił nieoczekiwany błąd.")
         }
+        .statusBarHidden(false)
     }
     
     private func color(from hex: String?) -> Color {
@@ -222,6 +231,18 @@ struct SlidesView: View {
             }
         }
     }
+    
+    private func prefetchVideos(for slides: [Slide]) async {
+        await withTaskGroup(of: Void.self) { group in
+            for slide in slides {
+                if let url = slide.video_mp4_url {
+                    group.addTask {
+                        _ = await VideoCache.shared.fetchIfNeeded(from: url)
+                    }
+                }
+            }
+        }
+    }
 }
 
 
@@ -266,6 +287,60 @@ struct CachedImageView: View {
     }
 }
 
+struct CachedVideoView: View {
+    let url: URL
+    @StateObject private var playerManager = VideoPlayerManager()
+    
+    var body: some View {
+        ZStack {
+            if let player = playerManager.player {
+                PlayerLayerView(player: player)
+                    .aspectRatio(contentMode: .fill)
+                    .opacity(playerManager.opacity)
+            } else {
+                Color.clear
+            }
+        }
+        .onAppear {
+            playerManager.setupPlayer(with: url)
+        }
+        .onDisappear {
+            playerManager.cleanup()
+        }
+        .onChange(of: url) { _, newURL in
+            playerManager.setupPlayer(with: newURL)
+        }
+    }
+}
+
+#if canImport(UIKit)
+import UIKit
+
+private final class PlayerContainerView: UIView {
+    override class var layerClass: AnyClass { AVPlayerLayer.self }
+    var playerLayer: AVPlayerLayer { layer as! AVPlayerLayer }
+    var player: AVPlayer? {
+        didSet {
+            playerLayer.player = player
+            playerLayer.videoGravity = .resizeAspectFill
+        }
+    }
+}
+
+private struct PlayerLayerView: UIViewRepresentable {
+    let player: AVPlayer
+    func makeUIView(context: Context) -> PlayerContainerView {
+        let v = PlayerContainerView()
+        v.isUserInteractionEnabled = false // no controls
+        v.player = player
+        return v
+    }
+    func updateUIView(_ uiView: PlayerContainerView, context: Context) {
+        if uiView.player !== player { uiView.player = player }
+    }
+}
+#endif
+
 class VideoPlayerManager: ObservableObject {
     @Published var opacity: Double = 0.0
     @Published var player: AVPlayer?
@@ -276,35 +351,43 @@ class VideoPlayerManager: ObservableObject {
     
     func setupPlayer(with url: URL) {
         cleanup()
-        
-        let item = AVPlayerItem(url: url)
-        let newPlayer = AVPlayer(playerItem: item)
-        newPlayer.isMuted = true
-        
-        playerItem = item
-        player = newPlayer
-        opacity = 0.0
-        
-        // Observe status using modern KVO
-        statusObserver = item.observe(\.status, options: [.new, .initial]) { [weak self] item, _ in
-            DispatchQueue.main.async {
-                if item.status == .readyToPlay {
-                    newPlayer.play()
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        self?.opacity = 1.0
+        Task { @MainActor in
+            let resolvedURL: URL
+            if let local = await VideoCache.shared.localURLIfExists(for: url) {
+                resolvedURL = local
+            } else if let fetched = await VideoCache.shared.fetchIfNeeded(from: url) {
+                resolvedURL = fetched
+            } else {
+                resolvedURL = url
+            }
+
+            let item = AVPlayerItem(url: resolvedURL)
+            let newPlayer = AVPlayer(playerItem: item)
+            newPlayer.isMuted = true
+
+            self.playerItem = item
+            self.player = newPlayer
+            self.opacity = 0.0
+
+            self.statusObserver = item.observe(\.status, options: [.new, .initial]) { [weak self] item, _ in
+                DispatchQueue.main.async {
+                    if item.status == .readyToPlay {
+                        newPlayer.play()
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            self?.opacity = 1.0
+                        }
                     }
                 }
             }
-        }
-        
-        // Set up looping
-        endTimeObserver = NotificationCenter.default.addObserver(
-            forName: .AVPlayerItemDidPlayToEndTime,
-            object: item,
-            queue: .main
-        ) { _ in
-            newPlayer.seek(to: .zero)
-            newPlayer.play()
+
+            self.endTimeObserver = NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: item,
+                queue: .main
+            ) { _ in
+                newPlayer.seek(to: .zero)
+                newPlayer.play()
+            }
         }
     }
     
@@ -324,32 +407,6 @@ class VideoPlayerManager: ObservableObject {
     
     deinit {
         cleanup()
-    }
-}
-
-struct CachedVideoView: View {
-    let url: URL
-    @StateObject private var playerManager = VideoPlayerManager()
-    
-    var body: some View {
-        ZStack {
-            if let player = playerManager.player {
-                VideoPlayer(player: player)
-                    .aspectRatio(contentMode: .fill)
-                    .opacity(playerManager.opacity)
-            } else {
-                Color.clear
-            }
-        }
-        .onAppear {
-            playerManager.setupPlayer(with: url)
-        }
-        .onDisappear {
-            playerManager.cleanup()
-        }
-        .onChange(of: url) { _, newURL in
-            playerManager.setupPlayer(with: newURL)
-        }
     }
 }
 
