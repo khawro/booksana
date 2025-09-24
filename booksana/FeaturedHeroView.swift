@@ -14,18 +14,13 @@ struct FeaturedHeroView: View {
     ZStack(alignment: .top) {
         
      // OKŁADKA
-        AsyncImage(url: URL(string: book.cover ?? ""), transaction: Transaction(animation: .none)) { phase in
-          switch phase {
-          case .success(let image):
-            image
-              .resizable()
-              .scaledToFill()
-              .frame(width: screenWidth, height: screenWidth, alignment: .top)
-              .clipped()
-          default:
-            Color.gray.opacity(0.3)
-              .frame(width: screenWidth, height: screenWidth)
-          }
+        if let urlString = book.cover, let url = URL(string: urlString) {
+          CachedImageView(url: url, contentMode: .fill)
+            .frame(width: screenWidth, height: screenWidth, alignment: .top)
+            .clipped()
+        } else {
+          Color.gray.opacity(0.3)
+            .frame(width: screenWidth, height: screenWidth)
         }
         
         
