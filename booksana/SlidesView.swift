@@ -466,11 +466,16 @@ private struct SlideLayerView: View {
                             if hasText {
                                 videoView
                                     .mask(
-                                        LinearGradient(
-                                            colors: [.black, .black, .black.opacity(0.0)],
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
+                                        VStack(spacing: 0) {
+                                            Color.black
+                                            LinearGradient(
+                                                colors: [.black, .black.opacity(0.0)],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                            .frame(height: 150)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                                     )
                             } else {
                                 videoView
@@ -486,11 +491,16 @@ private struct SlideLayerView: View {
                             if hasText {
                                 imageView
                                     .mask(
-                                        LinearGradient(
-                                            colors: [.black, .black, .black.opacity(0.0)],
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
+                                        VStack(spacing: 0) {
+                                            Color.black
+                                            LinearGradient(
+                                                colors: [.black, .black.opacity(0.0)],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                            .frame(height: 150)
+                                        }
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                                     )
                             } else {
                                 imageView
