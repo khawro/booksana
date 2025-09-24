@@ -12,8 +12,11 @@ struct TitlePageView: View {
   @State private var showSlides = false
   @State private var showUnavailableAlert = false
   
-  @State private var isBookmarked: Bool = false
   @StateObject private var savedBooksManager = SavedBooksManager.shared
+  
+  private var isBookmarked: Bool {
+    savedBooksManager.isBookmarked(book.id)
+  }
     
   var body: some View {
     let bg = Color(hex: book.color_hex ?? "#173E68")  // fallback kolor
@@ -33,7 +36,7 @@ struct TitlePageView: View {
 
             Button {
               UIImpactFeedbackGenerator(style: .light).impactOccurred()
-              isBookmarked = savedBooksManager.toggleBookmark(for: book)
+              _ = savedBooksManager.toggleBookmark(for: book)
             } label: {
               Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
                 .font(.title2.weight(.semibold))
@@ -79,9 +82,6 @@ struct TitlePageView: View {
               .padding(.bottom, 64)
           }
         }
-      }
-      .task {
-        isBookmarked = savedBooksManager.isBookmarked(book.id)
       }
       VStack {
         Spacer()

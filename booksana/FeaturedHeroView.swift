@@ -5,8 +5,10 @@ struct FeaturedHeroView: View {
   let screenWidth = UIScreen.main.bounds.width
 
   @State private var selectedBook: Book?
-  @State private var isBookmarked: Bool = false
   @StateObject private var savedBooksManager = SavedBooksManager.shared
+  private var isBookmarked: Bool {
+    savedBooksManager.isBookmarked(book.id)
+  }
 
   var body: some View {
     ZStack(alignment: .top) {
@@ -89,7 +91,7 @@ struct FeaturedHeroView: View {
           // Bookmark toggle button
           Button {
             Haptics.tap(.soft)
-            isBookmarked = savedBooksManager.toggleBookmark(for: book)
+            _ = savedBooksManager.toggleBookmark(for: book)
           } label: {
             Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
               .font(.headline)
@@ -112,9 +114,6 @@ struct FeaturedHeroView: View {
       TitlePageView(book: b)
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(32)
-    }
-    .task {
-      isBookmarked = savedBooksManager.isBookmarked(book.id)
     }
   }
 }
