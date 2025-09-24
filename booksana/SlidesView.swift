@@ -44,7 +44,7 @@ struct SlidesView: View {
                     .ignoresSafeArea()
                     .id(slides[currentIndex].id)
                     .transition(.opacity)
-                    .animation(.easeInOut(duration: 1), value: currentIndex)
+                    .animation(.easeInOut(duration: 0.5), value: currentIndex)
                 .onPreferenceChange(ImageHeightKey.self) { imageHeight = $0 }
                 .overlay(alignment: .top) {
                     // Progress bar centered at top
@@ -91,7 +91,7 @@ struct SlidesView: View {
                                         Task { _ = await ImageCache.shared.fetchIfNeeded(from: url) }
                                     }
                                     DispatchQueue.main.async {
-                                        withAnimation(.easeInOut(duration: 0.28)) {
+                                        withAnimation(.easeInOut(duration: 0.5)) {
                                             currentIndex = target
                                         }
                                     }
@@ -108,7 +108,7 @@ struct SlidesView: View {
                                         Task { _ = await ImageCache.shared.fetchIfNeeded(from: url) }
                                     }
                                     DispatchQueue.main.async {
-                                        withAnimation(.easeInOut(duration: 0.28)) {
+                                        withAnimation(.easeInOut(duration: 0.5)) {
                                             currentIndex = target
                                         }
                                     }
@@ -367,6 +367,7 @@ private struct ProgressBar: View {
             }
         }
         .clipShape(Capsule())
+        .animation(.easeInOut(duration: 0.5), value: progress)
     }
 }
 
