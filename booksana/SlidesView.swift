@@ -393,6 +393,69 @@ private struct SlideLayerView: View {
             .replacingOccurrences(of: "\r", with: "\n")
             .replacingOccurrences(of: "\\n", with: "\n")
     }
+    
+    private func isListParagraph(_ paragraph: String) -> Bool {
+        // Consider a paragraph a list if any non-empty line starts with -, *, or + followed by a space
+        let lines = paragraph
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .components(separatedBy: "\n")
+        var foundBullet = false
+        for line in lines {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty { continue }
+            if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") || trimmed.hasPrefix("+ ") {
+                foundBullet = true
+            } else if foundBullet {
+                // If we already saw a bullet and this line isn't a bullet, still treat as list (wrapped line)
+                continue
+            } else {
+                return false
+            }
+        }
+        return foundBullet
+    }
+    
+    @ViewBuilder
+    private func renderList(from paragraph: String) -> some View {
+        let lines = paragraph
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .components(separatedBy: "\n")
+        let items: [String] = lines.compactMap { raw in
+            let trimmed = raw.trimmingCharacters(in: .whitespaces)
+            guard !trimmed.isEmpty else { return nil }
+            if trimmed.hasPrefix("- ") || trimmed.hasPrefix("* ") || trimmed.hasPrefix("+ ") {
+                return String(trimmed.dropFirst(2))
+            } else {
+                // Continuation line for the previous bullet: keep it as-is prefixed with a space
+                return " " + trimmed
+            }
+        }
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(Array(items.enumerated()), id: \.offset) { _, rawItem in
+                // Support simple inline markdown within list items
+                let itemText: Text = {
+                    if let attributed = try? AttributedString(markdown: rawItem) {
+                        return Text(attributed)
+                    } else {
+                        return Text(rawItem)
+                    }
+                }()
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(slideColor(from: slide.content_color))
+                    itemText
+                        .font(.system(size: 17).weight(.regular))
+                        .opacity(0.9)
+                        .lineSpacing(5)
+                }
+                .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+    }
 
     @ViewBuilder
     private func textContent() -> some View {
@@ -426,19 +489,23 @@ private struct SlideLayerView: View {
                     VStack(spacing: 20) {
                         ForEach(paragraphs.indices, id: \.self) { i in
                             let para = paragraphs[i]
-                            let paraWithHardBreaks = para.replacingOccurrences(of: "\n", with: "  \n")
-                            if let attributed = try? AttributedString(markdown: paraWithHardBreaks) {
-                                Text(attributed)
-                                    .font(.system(size: 17).weight(.regular))
-                                    .opacity(0.9)
-                                    .lineSpacing(5)
-                                    .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+                            if isListParagraph(para) {
+                                renderList(from: para)
                             } else {
-                                Text(para)
-                                    .font(.system(size: 17).weight(.regular))
-                                    .opacity(0.9)
-                                    .lineSpacing(5)
-                                    .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+                                let paraWithHardBreaks = para.replacingOccurrences(of: "\n", with: "  \n")
+                                if let attributed = try? AttributedString(markdown: paraWithHardBreaks) {
+                                    Text(attributed)
+                                        .font(.system(size: 17).weight(.regular))
+                                        .opacity(0.9)
+                                        .lineSpacing(5)
+                                        .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+                                } else {
+                                    Text(para)
+                                        .font(.system(size: 17).weight(.regular))
+                                        .opacity(0.9)
+                                        .lineSpacing(5)
+                                        .frame(maxWidth: .infinity, alignment: slideAlignment(from: slide.text_alignment))
+                                }
                             }
                         }
                     }
