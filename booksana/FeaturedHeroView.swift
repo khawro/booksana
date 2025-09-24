@@ -2,9 +2,11 @@ import SwiftUI
 
 struct FeaturedHeroView: View {
   let book: Book
-    let screenWidth = UIScreen.main.bounds.width
+  let screenWidth = UIScreen.main.bounds.width
 
   @State private var selectedBook: Book?
+  @State private var isBookmarked: Bool = false
+  @StateObject private var savedBooksManager = SavedBooksManager.shared
 
   var body: some View {
     ZStack(alignment: .top) {
@@ -69,17 +71,37 @@ struct FeaturedHeroView: View {
             .opacity(0.9)
         }
 
-        Button {
-          Haptics.tap(.soft)
-          selectedBook = book
-        } label: {
-          Label("Czytaj", systemImage: "book")
-            .font(.headline)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .foregroundColor(.black)
+        HStack(spacing: 12) {
+          // Czytaj button (not full-width)
+          Button {
+            Haptics.tap(.soft)
+            selectedBook = book
+          } label: {
+            Label("Czytaj", systemImage: "book")
+              .font(.headline)
+              .foregroundColor(.black)
+              .padding(.horizontal, 28)
+              .padding(.vertical, 12)
+              .background(Color.white, in: Capsule())
+          }
+          .buttonStyle(.plain)
+
+          // Bookmark toggle button
+          Button {
+            Haptics.tap(.soft)
+            isBookmarked = savedBooksManager.toggleBookmark(for: book)
+          } label: {
+            Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
+              .font(.headline)
+              .foregroundStyle(.white)
+              .frame(width: 44, height: 44)
+              .background(.ultraThinMaterial, in: Circle())
+              .overlay(
+                Circle().stroke(Color.white.opacity(0.35), lineWidth: 1)
+              )
+          }
+          .buttonStyle(.plain)
         }
-        .background(Color.white, in: Capsule())
         .padding(.top, 16)
         .padding(.bottom, 16)
       })
@@ -91,6 +113,9 @@ struct FeaturedHeroView: View {
         .presentationDragIndicator(.visible)
         .presentationCornerRadius(32)
     }
+    .task {
+      isBookmarked = savedBooksManager.isBookmarked(book.id)
+    }
   }
 }
 
@@ -98,3 +123,4 @@ struct FeaturedHeroView: View {
 #Preview {
   ForYouView().preferredColorScheme(.dark)
 }
+
