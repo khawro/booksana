@@ -11,6 +11,7 @@
 		EA57286F2E7588D600766BBC /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = EA57286E2E7588D600766BBC /* Supabase */; };
 		EA5C3C242E7E9C8B00D331E2 /* AppStartup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA5C3C232E7E9C8B00D331E2 /* AppStartup.swift */; };
 		EAE55BB42E84A8C500F63AA5 /* VideoCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAE55BB32E84A8C400F63AA5 /* VideoCache.swift */; };
+		EAE55BB62E84AE8000F63AA5 /* LastReadPositionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAE55BB52E84AE8000F63AA5 /* LastReadPositionStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,6 +37,7 @@
 		EA5728542E75831900766BBC /* booksanaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = booksanaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA5C3C232E7E9C8B00D331E2 /* AppStartup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStartup.swift; sourceTree = "<group>"; };
 		EAE55BB32E84A8C400F63AA5 /* VideoCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCache.swift; sourceTree = "<group>"; };
+		EAE55BB52E84AE8000F63AA5 /* LastReadPositionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastReadPositionStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -122,6 +124,7 @@
 				EA57283E2E75831800766BBC /* Products */,
 				EA5C3C232E7E9C8B00D331E2 /* AppStartup.swift */,
 				EAE55BB32E84A8C400F63AA5 /* VideoCache.swift */,
+				EAE55BB52E84AE8000F63AA5 /* LastReadPositionStore.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -291,6 +294,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EAE55BB62E84AE8000F63AA5 /* LastReadPositionStore.swift in Sources */,
 				EAE55BB42E84A8C500F63AA5 /* VideoCache.swift in Sources */,
 				EA5C3C242E7E9C8B00D331E2 /* AppStartup.swift in Sources */,
 			);

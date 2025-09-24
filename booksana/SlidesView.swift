@@ -12,6 +12,7 @@ struct SlidesView: View {
     let onClose: (() -> Void)?
     @State private var slides: [Slide] = []
     @State private var currentIndex: Int = 0
+    @State private var restoredInitialIndex: Bool = false
     @State private var isLoading = true
     @State private var imageHeight: CGFloat = 0
     @State private var showErrorAlert: Bool = false
@@ -98,6 +99,7 @@ struct SlidesView: View {
                                         withAnimation(.easeInOut(duration: 0.5)) {
                                             currentIndex = target
                                         }
+                                        LastReadPositionStore.shared.setLastSlideIndex(target, for: bookID)
                                     }
                                 }
                             }
@@ -118,6 +120,7 @@ struct SlidesView: View {
                                         withAnimation(.easeInOut(duration: 0.5)) {
                                             currentIndex = target
                                         }
+                                        LastReadPositionStore.shared.setLastSlideIndex(target, for: bookID)
                                     }
                                 }
                             }
@@ -134,6 +137,10 @@ struct SlidesView: View {
                 // keep data locally first
                 slides = fetchedSlides
                 currentIndex = 0
+                if let saved = LastReadPositionStore.shared.lastSlideIndex(for: bookID), saved >= 0, saved < fetchedSlides.count {
+                    currentIndex = saved
+                }
+                restoredInitialIndex = true
                 // prefetch all images and videos before showing UI
                 await prefetchImages(for: fetchedSlides)
                 await prefetchVideos(for: fetchedSlides)
@@ -156,6 +163,14 @@ struct SlidesView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text(errorMessage ?? "Wystąpił nieoczekiwany błąd.")
+        }
+        .onChange(of: currentIndex) { _, newValue in
+            guard restoredInitialIndex, newValue >= 0, newValue < slides.count else { return }
+            LastReadPositionStore.shared.setLastSlideIndex(newValue, for: bookID)
+        }
+        .onDisappear {
+            guard restoredInitialIndex, currentIndex >= 0, currentIndex < slides.count else { return }
+            LastReadPositionStore.shared.setLastSlideIndex(currentIndex, for: bookID)
         }
         .statusBarHidden(false)
     }
@@ -732,4 +747,3 @@ extension NSColor {
 #Preview {
     SlidesView(bookID: Int64(1))
 }
-
