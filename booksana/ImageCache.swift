@@ -26,15 +26,14 @@ final actor ImageCache {
         return image
     }
     
-    func store(_ image: UIImage, for url: URL) async {
+    func store(_ data: Data, for url: URL) async {
         let key = cacheKey(for: url)
-        memoryCache.setObject(image, forKey: key as NSString)
+        if let image = UIImage(data: data) {
+            memoryCache.setObject(image, forKey: key as NSString)
+        }
         
         let fileURL = cacheFolderURL.appendingPathComponent(key)
-        // Downscale if needed before saving
-        let imageToSave = image.downscaledIfNeeded(maxDimension: 1024)
-        guard let pngData = imageToSave.pngDataOrNil else { return }
-        try? pngData.write(to: fileURL, options: [.atomic])
+        try? data.write(to: fileURL, options: [.atomic])
     }
     
     func removeAll() async {
@@ -50,9 +49,8 @@ final actor ImageCache {
         
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
-            guard let image = UIImage(data: data) else { return nil }
-            await store(image, for: url)
-            return image
+            await store(data, for: url)
+            return UIImage(data: data)
         } catch {
             return nil
         }
@@ -77,26 +75,5 @@ final actor ImageCache {
             return allowed.contains(scalar) ? String(scalar) : "-"
         }
         return scalars.joined()
-    }
-}
-
-private extension UIImage {
-    var pngDataOrNil: Data? {
-        self.pngData()
-    }
-    
-    func downscaledIfNeeded(maxDimension: CGFloat) -> UIImage {
-        let maxCurrentDimension = max(size.width, size.height)
-        guard maxCurrentDimension > maxDimension else {
-            return self
-        }
-        let scale = maxDimension / maxCurrentDimension
-        let targetSize = CGSize(width: size.width * scale, height: size.height * scale)
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
-        return renderer.image { _ in
-            self.draw(in: CGRect(origin: .zero, size: targetSize))
-        }
     }
 }
