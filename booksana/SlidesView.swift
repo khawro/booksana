@@ -310,7 +310,6 @@ struct CachedVideoView: View {
         ZStack {
             if let player = playerManager.player {
                 PlayerLayerView(player: player)
-                    .aspectRatio(contentMode: .fill)
                     .opacity(playerManager.opacity)
             } else {
                 Color.clear
@@ -622,7 +621,6 @@ private struct SlideLayerView: View {
                     if let videoURL = slide.video_mp4_url {
                         // Video takes priority over image
                         let videoView = CachedVideoView(url: videoURL)
-                            .frame(width: UIScreen.main.bounds.width)
                         Group {
                             if hasText {
                                 videoView
@@ -643,11 +641,10 @@ private struct SlideLayerView: View {
                             }
                         }
                         .clipped()
-                        .frame(width: UIScreen.main.bounds.width, height: geo.size.height, alignment: .top)
+                        .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                         .preference(key: ImageHeightKey.self, value: geo.size.height)
                     } else if let imageURL = slide.image_url {
                         let imageView = CachedImageView(url: imageURL, contentMode: .fill)
-                            .frame(width: UIScreen.main.bounds.width)
                         Group {
                             if hasText {
                                 imageView
@@ -668,7 +665,7 @@ private struct SlideLayerView: View {
                             }
                         }
                         .clipped()
-                        .frame(width: UIScreen.main.bounds.width, height: geo.size.height, alignment: .top)
+                        .frame(width: geo.size.width, height: geo.size.height, alignment: .center)
                         .preference(key: ImageHeightKey.self, value: geo.size.height)
                         .ignoresSafeArea(edges: .bottom)
                     }
@@ -747,3 +744,4 @@ extension NSColor {
 #Preview {
     SlidesView(bookID: Int64(1))
 }
+
