@@ -5,8 +5,8 @@ struct Book: Codable, Identifiable {
   let title: String
   let description: String?
   let cover: String?
-  let featured: Bool?
-  let selected: Bool?
+  let featured: Int?
+  let selected: Int?
   let extrainfo: String?
   let book_url: String?
   let category: Int64?     // <-- NAZWA i TYP zgodne z DB (int8)

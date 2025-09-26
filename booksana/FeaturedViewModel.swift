@@ -13,8 +13,8 @@ final class FeaturedViewModel: ObservableObject {
       let result: [Book] = try await SupabaseManager.shared.client
         .from("books")
         .select(BookSelect.full)
-        .eq("featured", value: true)
-        .order("created_at", ascending: false)
+        .gte("featured", value: 0)
+        .order("featured", ascending: true)
         .limit(limit)
         .execute()
         .value
@@ -25,4 +25,3 @@ final class FeaturedViewModel: ObservableObject {
     }
   }
 }
-

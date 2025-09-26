@@ -11,8 +11,8 @@ final class SelectedBooksViewModel: ObservableObject {
         let res: [Book] = try await SupabaseManager.shared.client
           .from("books")
           .select(BookSelect.full)
-          .eq("selected", value: true)
-          .order("created_at", ascending: false)
+          .gte("selected", value: 0)
+          .order("selected", ascending: true)
           .execute()
           .value
         
@@ -25,3 +25,4 @@ final class SelectedBooksViewModel: ObservableObject {
     }
   }
 }
+

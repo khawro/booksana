@@ -208,7 +208,7 @@ struct TitlePageView: View {
     id: 1, title: "Zostań Stoikiem XXI wieku",
     description: "Życie bywa chaotyczne...",
     cover: "https://picsum.photos/600/600",
-    featured: true, selected: true,
+    featured: 1, selected: 1,
     extrainfo: "10 rozdziałów",
     book_url: "https://example.com",
     category: 1, color_hex: "#173E68"
