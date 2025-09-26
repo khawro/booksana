@@ -5,21 +5,59 @@ struct BookThumbnailView: View {
   let book: Book
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      ZStack {
-        Color.clear
-        CachedCoverView(urlString: book.cover)
-      }
-      .frame(width: 158, height: 158)
-      .background(Color.gray.opacity(0.2))
-      .clipShape(RoundedRectangle(cornerRadius: 20))
+    let bg = Color(hex: book.color_hex ?? "#173E68")
 
-      Text(book.title)
-        .font(.subheadline)
-        .foregroundStyle(.primary)
-        .lineLimit(2)
+    ZStack {
+      // Card background uses the book color
+      bg
+
+      // Content stack: fixed 162x162 cover on top, title below with 0px spacing
+      VStack(spacing: 0) {
+        // Cover area strictly 162x162
+        CachedCoverView(urlString: book.cover)
+          .frame(width: 162, height: 162)
+          .clipped()
+          .mask(
+            VStack(spacing: 0) {
+              Color.black
+              LinearGradient(
+                colors: [.black, .black.opacity(0.0)],
+                startPoint: .top,
+                endPoint: .bottom
+              )
+              .frame(height: 72) // gradient mask height
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+          )
+
+        // Title area
+        Text(book.title)
+          .font(.subheadline)
+          .foregroundStyle(.white)
+          .lineLimit(2)
+          .multilineTextAlignment(.center)
+          .frame(maxWidth: .infinity, alignment: .center)
+          .frame(height: 40, alignment: .center)
+          .padding(.horizontal, 16)
+          .offset(y: -12)
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
-    .frame(width: 158, alignment: .leading)
+    .frame(width: 162, height: 206, alignment: .top)
+    .clipShape(RoundedRectangle(cornerRadius: 24))
+    /* .overlay(alignment: .top) { // gradient from top
+      LinearGradient(
+        colors: [Color.white.opacity(0.025), Color.white.opacity(0.0)],
+        startPoint: .top,
+        endPoint: .bottom
+      )
+      .frame(height: 84)
+      .clipShape(RoundedRectangle(cornerRadius: 24))
+    }
+    .overlay( // transparent border
+      RoundedRectangle(cornerRadius: 24)
+        .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.5)
+    ) */
   }
 }
 
@@ -60,3 +98,4 @@ struct CachedCoverView: View {
     }
   }
 }
+
