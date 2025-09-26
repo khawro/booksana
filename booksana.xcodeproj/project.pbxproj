@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		EA1396AE2E8708EF0050E5CE /* CategoryNameCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1396AD2E8708EF0050E5CE /* CategoryNameCache.swift */; };
 		EA5728692E7585DE00766BBC /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = EA5728682E7585DE00766BBC /* PostgREST */; };
 		EA57286F2E7588D600766BBC /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = EA57286E2E7588D600766BBC /* Supabase */; };
 		EA5C3C242E7E9C8B00D331E2 /* AppStartup.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA5C3C232E7E9C8B00D331E2 /* AppStartup.swift */; };
@@ -32,6 +33,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		EA1396AD2E8708EF0050E5CE /* CategoryNameCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryNameCache.swift; sourceTree = "<group>"; };
 		EA57283D2E75831800766BBC /* booksana.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = booksana.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA57284A2E75831900766BBC /* booksanaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = booksanaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EA5728542E75831900766BBC /* booksanaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = booksanaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -125,6 +127,7 @@
 				EA5C3C232E7E9C8B00D331E2 /* AppStartup.swift */,
 				EAE55BB32E84A8C400F63AA5 /* VideoCache.swift */,
 				EAE55BB52E84AE8000F63AA5 /* LastReadPositionStore.swift */,
+				EA1396AD2E8708EF0050E5CE /* CategoryNameCache.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -295,6 +298,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EAE55BB62E84AE8000F63AA5 /* LastReadPositionStore.swift in Sources */,
+				EA1396AE2E8708EF0050E5CE /* CategoryNameCache.swift in Sources */,
 				EAE55BB42E84A8C500F63AA5 /* VideoCache.swift in Sources */,
 				EA5C3C242E7E9C8B00D331E2 /* AppStartup.swift in Sources */,
 			);

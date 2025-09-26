@@ -16,6 +16,13 @@ final class TitlePageViewModel: ObservableObject {
     }
     let id = Int(rawId) // int8 -> Int
 
+    // Fast path: try cache first
+    if let cached = CategoryNameCache.shared.name(for: rawId) {
+      self.categoryName = cached
+      self.lastError = nil
+      return
+    }
+
     isLoading = true
     defer { isLoading = false }
 
@@ -34,6 +41,7 @@ final class TitlePageViewModel: ObservableObject {
       if let name = rows.first?.category_name, !name.isEmpty {
         self.categoryName = name
         self.lastError = nil
+        CategoryNameCache.shared.setName(name, for: rawId)
       } else {
         self.categoryName = nil
         self.lastError = "Brak kategorii dla id \(id)"
@@ -45,3 +53,4 @@ final class TitlePageViewModel: ObservableObject {
     }
   }
 }
+

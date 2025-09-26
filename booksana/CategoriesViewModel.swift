@@ -18,6 +18,7 @@ final class CategoriesViewModel: ObservableObject {
         .value
 
       self.categories = cats
+      CategoryNameCache.shared.setMany(cats)
 
       // 2) książki per kategoria (prosto, sekwencyjnie)
       var map: [Int64: [Book]] = [:]
