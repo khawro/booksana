@@ -1,11 +1,14 @@
 import SwiftUI
 
 struct FeaturedHeroView: View {
+  private static var hasAnimatedFeaturedHeroSession = false
   let book: Book
   let screenWidth = UIScreen.main.bounds.width
 
   @State private var selectedBook: Book?
   @StateObject private var savedBooksManager = SavedBooksManager.shared
+  @State private var showHero = false
+  @State private var shouldAnimate = true
   private var isBookmarked: Bool {
     savedBooksManager.isBookmarked(book.id)
   }
@@ -18,9 +21,13 @@ struct FeaturedHeroView: View {
           CachedImageView(url: url, contentMode: .fill)
             .frame(width: screenWidth, height: screenWidth, alignment: .top)
             .clipped()
+            .opacity(shouldAnimate ? (showHero ? 1 : 0) : 1)
+            .animation(shouldAnimate ? .easeOut(duration: 0.4) : .none, value: showHero)
         } else {
           Color.gray.opacity(0.3)
             .frame(width: screenWidth, height: screenWidth)
+            .opacity(shouldAnimate ? (showHero ? 1 : 0) : 1)
+            .animation(shouldAnimate ? .easeOut(duration: 0.4) : .none, value: showHero)
         }
         
         
@@ -48,6 +55,8 @@ struct FeaturedHeroView: View {
           .font(.footnote.weight(.bold))
           .kerning(1.05)
           .foregroundStyle(.primary)
+          .opacity(shouldAnimate ? (showHero ? 1 : 0) : 1)
+          .animation(shouldAnimate ? .easeOut(duration: 0.35) : .none, value: showHero)
 
         Text(book.title ?? "")
           .font(.custom("PPEditorialNew-Regular", size: 34))
@@ -56,6 +65,9 @@ struct FeaturedHeroView: View {
           .lineLimit(2)
           .fixedSize(horizontal: false, vertical: true)
           .layoutPriority(1)
+          .opacity(shouldAnimate ? (showHero ? 1 : 0) : 1)
+          .offset(y: shouldAnimate ? (showHero ? 0 : 12) : 0)
+          .animation(shouldAnimate ? .easeOut(duration: 0.45).delay(0.05) : .none, value: showHero)
 
         if let desc = book.description, !desc.isEmpty {
           Text(desc)
@@ -65,6 +77,9 @@ struct FeaturedHeroView: View {
             .lineLimit(2)
             .fixedSize(horizontal: false, vertical: true)
             .layoutPriority(1)
+            .opacity(shouldAnimate ? (showHero ? 1 : 0) : 1)
+            .offset(y: shouldAnimate ? (showHero ? 0 : 12) : 0)
+            .animation(shouldAnimate ? .easeOut(duration: 0.45).delay(0.12) : .none, value: showHero)
             .opacity(0.9)
         }
 
@@ -101,8 +116,24 @@ struct FeaturedHeroView: View {
         }
         .padding(.top, 16)
         .padding(.bottom, 16)
+        .opacity(shouldAnimate ? (showHero ? 1 : 0) : 1)
+        .offset(y: shouldAnimate ? (showHero ? 0 : 12) : 0)
+        .animation(shouldAnimate ? .easeOut(duration: 0.45).delay(0.18) : .none, value: showHero)
       })
       .padding(.horizontal, 32)
+    }
+    .onAppear {
+      // Animate only once per app session (first visible hero)
+      if !Self.hasAnimatedFeaturedHeroSession {
+        shouldAnimate = true
+        Self.hasAnimatedFeaturedHeroSession = true
+      } else {
+        shouldAnimate = false
+      }
+      // Move to the final state (animated if allowed, instant otherwise) on next runloop turn
+      DispatchQueue.main.async {
+        showHero = true
+      }
     }
   
     .sheet(item: $selectedBook) { b in
