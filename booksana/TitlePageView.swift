@@ -25,14 +25,26 @@ struct TitlePageView: View {
       bg.ignoresSafeArea()
 
       ScrollView {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .center, spacing: 0) {
 
-          // Okładka + przycisk bookmark w prawym górnym rogu
+          // Okładka full-bleed + przejście do tła (mask 120px) + przycisk bookmark w prawym górnym rogu
           ZStack(alignment: .topTrailing) {
             CachedCoverView(urlString: book.cover)
-              .frame(width: UIScreen.main.bounds.width - 64, height: UIScreen.main.bounds.width - 64)
-              .clipShape(RoundedRectangle(cornerRadius: 22))
-              .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 6)
+              .frame(maxWidth: .infinity)
+              .aspectRatio(1, contentMode: .fill)
+              .clipped()
+              .mask(
+                VStack(spacing: 0) {
+                  Color.black
+                  LinearGradient(
+                    colors: [.black, .black.opacity(0.0)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                  )
+                  .frame(height: 120)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+              )
 
             Button {
               UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -44,33 +56,35 @@ struct TitlePageView: View {
                 .padding(10)
                 .background(.ultraThinMaterial, in: Circle())
             }
-            .padding(14)
+            .padding(.top, 12)
+            .padding(.trailing, 16)
           }
-          .padding(.horizontal, 32)
-          .padding(.top, 32)
-          .padding(.bottom, 16)
+          .padding(.bottom, 0)
           
 
           // Kategoria • Extra
           HStack(spacing: 8) {
             if let name = vm.categoryName, !name.isEmpty {
               Text(name.uppercased())
-                .font(.caption.weight(.semibold)).opacity(0.8)
+                .font(.footnote.weight(.semibold)).opacity(0.8)
             }
             if (book.extrainfo ?? "").isEmpty == false {
               if vm.categoryName != nil { Text("•").font(.caption.weight(.semibold)).opacity(0.6) }
               Text((book.extrainfo ?? "").uppercased())
-                .font(.caption.weight(.semibold)).opacity(0.8)
+                .font(.footnote.weight(.semibold)).opacity(0.8)
             
             }
           }
           .padding(.horizontal, 32)
+          .frame(maxWidth: .infinity, alignment: .center)
           .foregroundStyle(.white.opacity(0.9))
 
           // Tytuł
           Text(book.title)
-            .font(.custom("PPEditorialNew-Regular", size: 36))
+            .font(.custom("PPEditorialNew-Regular", size: 40))
             .foregroundStyle(.white)
+            .multilineTextAlignment(.center)
+            .padding(.vertical, 12)
             .padding(.horizontal, 32)
 
           // Opis
@@ -78,6 +92,7 @@ struct TitlePageView: View {
             Text(desc)
               .font(.callout)
               .foregroundStyle(.white.opacity(0.9))
+              .multilineTextAlignment(.center)
               .padding(.horizontal, 32)
               .padding(.bottom, 64)
           }

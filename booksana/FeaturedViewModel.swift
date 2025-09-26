@@ -12,7 +12,7 @@ final class FeaturedViewModel: ObservableObject {
       // pobiera max 3 książki z featured=true (dopasuj nazwę kolumny jeśli inna)
       let result: [Book] = try await SupabaseManager.shared.client
         .from("books")
-        .select()
+        .select(BookSelect.full)
         .eq("featured", value: true)
         .order("created_at", ascending: false)
         .limit(limit)
